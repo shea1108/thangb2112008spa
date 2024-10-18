@@ -16,7 +16,9 @@ const totalPages = ref(1);
 const contacts = ref([]);
 const selectedIndex = ref(-1);
 const searchText = ref('');
-const selectedContact = computed(() => (selectedIndex.value < 0 ? null : filteredContacts.value[selectedIndex.value]));
+const selectedContact = computed(() =>
+  selectedIndex.value < 0 ? null : filteredContacts.value[selectedIndex.value]
+);
 
 // Get the current page from the query string (?page=1)
 const currentPage = computed(() => {
@@ -25,8 +27,8 @@ const currentPage = computed(() => {
 });
 
 // Create a searchable string from each contact (name, email, address, phone)
-const searchableContacts = computed(() => 
-  contacts.value.map(contact => {
+const searchableContacts = computed(() =>
+  contacts.value.map((contact) => {
     const { name, email, address, phone } = contact;
     return `${name} ${email} ${address} ${phone}`;
   })
@@ -36,7 +38,9 @@ const searchableContacts = computed(() =>
 const filteredContacts = computed(() => {
   if (!searchText.value) return contacts.value;
   return contacts.value.filter((contact, index) =>
-    searchableContacts.value[index].toLowerCase().includes(searchText.value.toLowerCase())
+    searchableContacts.value[index]
+      .toLowerCase()
+      .includes(searchText.value.toLowerCase())
   );
 });
 
@@ -83,10 +87,13 @@ watch(searchText, () => {
 });
 
 // Fetch contacts when currentPage changes
-watch(currentPage, () => {
-  retrieveContacts(currentPage.value);
-}, { immediate: true });
-
+watch(
+  currentPage,
+  () => {
+    retrieveContacts(currentPage.value);
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -140,6 +147,16 @@ watch(currentPage, () => {
           <i class="fas fa-address-card"></i>
         </h4>
         <ContactCard :contact="selectedContact" />
+        <router-link
+          :to="{
+            name: 'contact.edit',
+            params: { id: selectedContact.id },
+          }"
+        >
+          <span class="mt-2 badge text-bg-warning">
+            <i class="fas fa-edit"></i> Hiệu chỉnh
+          </span>
+        </router-link>
       </div>
     </div>
   </div>
