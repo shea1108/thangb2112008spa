@@ -32,9 +32,9 @@ function makeContactsService() {
     }
 
     async function createContact(contact) {
-        return efetch(baseUrl, {
-            method: 'POST',
-            body: contact,
+        return efetch('/api/v1/contacts', {
+          method: 'POST',
+          body: contact,
         });
     }
 

@@ -1,32 +1,37 @@
 <script setup>
-import { ref, useTemplateRef } from 'vue';
+import { ref, useTemplateRef, watch } from 'vue';
 import { Form, Field, ErrorMessage } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';
 
+// Default avatar image
+const DEFAULT_AVATAR = '/blank-profile-picture.png';  
 const props = defineProps({
-  contact: { type: Object, required: true },
+  contact: {
+    type: Object,
+    default: () => ({ name: '', email: '', address: '', phone: '', avatar: DEFAULT_AVATAR, favorite: 0 }),
+  },
 });
 
 let avatarFileInput = useTemplateRef('avatar-file-input');
-let avatarFile = ref(props.contact.avatar);
+let avatarFile = ref(props.contact.avatar || DEFAULT_AVATAR);
+
 const $emit = defineEmits(['submit:contact', 'delete:contact']);
+
+// Watch for changes in avatar when a new contact is added
+watch(
+  () => props.contact.avatar,
+  (newAvatar) => {
+    avatarFile.value = newAvatar || DEFAULT_AVATAR;
+  }
+);
 
 let validationSchema = toTypedSchema(
   z.object({
-    name: z
-      .string()
-      .min(2, { message: 'Tên phải ít nhất 2 ký tự.' })
-      .max(50, { message: 'Tên có nhiều nhất 50 ký tự.' }),
-    email: z
-      .string()
-      .email({ message: 'E-mail không đúng.' })
-      .max(50, { message: 'E-mail tối đa 50 ký tự.' }),
+    name: z.string().min(2, { message: 'Tên phải ít nhất 2 ký tự.' }).max(50, { message: 'Tên có nhiều nhất 50 ký tự.' }),
+    email: z.string().email({ message: 'E-mail không đúng.' }).max(50, { message: 'E-mail tối đa 50 ký tự.' }),
     address: z.string().max(100, { message: 'Địa chỉ tối đa 100 ký tự.' }),
-    phone: z.string().regex(
-      /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/g,
-      { message: 'Số điện thoại không hợp lệ.' }
-    ),
+    phone: z.string().regex(/(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/g, { message: 'Số điện thoại không hợp lệ.' }),
     favorite: z.number().optional(),
     avatarFile: z.instanceof(File).optional(),
   })
@@ -53,7 +58,9 @@ function submitContact(values) {
 }
 
 function deleteContact() {
-  $emit('delete:contact', props.contact.id);
+  if (props.contact.id) {
+    $emit('delete:contact', props.contact.id);
+  }
 }
 </script>
 
@@ -63,7 +70,7 @@ function deleteContact() {
       <img
         class="img-fluid img-thumbnail"
         :src="avatarFile"
-        alt=""
+        alt="Avatar"
         @click="avatarFileInput.click()"
       />
       <Field name="avatarFile" v-slot="{ handleChange }">
@@ -71,37 +78,32 @@ function deleteContact() {
           type="file"
           class="d-none"
           ref="avatar-file-input"
-          @change="
-            (event) => {
-              handleChange(event);
-              previewAvatarFile(event);
-            }
-          "
+          @change="(event) => { handleChange(event); previewAvatarFile(event); }"
         />
       </Field>
     </div>
 
     <div class="mb-3">
       <label for="name" class="form-label">Tên</label>
-      <Field name="name" type="text" class="form-control" :value="contact.name" />
+      <Field name="name" type="text" class="form-control" :value="props.contact.name" />
       <ErrorMessage name="name" class="error-feedback" />
     </div>
 
     <div class="mb-3">
       <label for="email" class="form-label">E-mail</label>
-      <Field name="email" type="email" class="form-control" :value="contact.email" />
+      <Field name="email" type="email" class="form-control" :value="props.contact.email" />
       <ErrorMessage name="email" class="error-feedback" />
     </div>
 
     <div class="mb-3">
       <label for="address" class="form-label">Địa chỉ</label>
-      <Field name="address" type="text" class="form-control" :value="contact.address" />
+      <Field name="address" type="text" class="form-control" :value="props.contact.address" />
       <ErrorMessage name="address" class="error-feedback" />
     </div>
 
     <div class="mb-3">
       <label for="phone" class="form-label">Điện thoại</label>
-      <Field name="phone" type="tel" class="form-control" :value="contact.phone" />
+      <Field name="phone" type="tel" class="form-control" :value="props.contact.phone" />
       <ErrorMessage name="phone" class="error-feedback" />
     </div>
 
@@ -110,7 +112,7 @@ function deleteContact() {
         name="favorite"
         type="checkbox"
         class="form-check-input"
-        :model-value="contact.favorite"
+        :model-value="props.contact.favorite"
         :value="1"
         :unchecked-value="0"
       />
@@ -124,7 +126,7 @@ function deleteContact() {
         <i class="fas fa-save"></i> Lưu
       </button>
       <button
-        v-if="contact.id"
+        v-if="props.contact.id"
         type="button"
         class="ms-2 btn btn-danger"
         @click="deleteContact"
